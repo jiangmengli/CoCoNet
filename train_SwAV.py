@@ -1,9 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
 import argparse
 import math
 import os
@@ -45,7 +39,6 @@ from src.testloader import ClassifyDataset
 import src.resnet50 as resnet_models
 import src.con5 as con5_models
 import src.fc as fc_models
-from src.wdgrl import gradient_penalty
 
 logger = getLogger()
 test_logger=getLogger()
@@ -139,23 +132,7 @@ parser.add_argument("--dump_path", type=str, default="./cifar-fc-3-30-new",
                     help="experiment dump path for checkpoints and log")
 parser.add_argument("--seed", type=int, default=31, help="seed")
 
-
-#########################
-#### wdgrl parameters ###
-#########################
-
-
-
-
-
-parser.add_argument("--k_critic", default=5, type=int,
-                    help="this argument is not used and should be ignored")
-parser.add_argument('--gamma', type=float, default=1,
-                    help="this argument is not used and should be ignored")                    
-
-
-
-################  合成后的超参
+################ 
 parser.add_argument("--test_dump_path", type=str, default=".",
                     help="experiment dump path for checkpoints and log")
 parser.add_argument("--pretrained", default="", type=str, help="path to pretrained weights")
@@ -171,8 +148,6 @@ parser.add_argument("--nesterov", default=False, type=bool_flag, help="nesterov 
 parser.add_argument("--scheduler_type", default="cosine", type=str, choices=["step", "cosine"])
 
 def main():
-    # data_path='/data/multiview'  ###boat
-    
     
     data_path='/data/multiview-cifar10-set'
     global args
@@ -184,15 +159,6 @@ def main():
     test_logger,test_training_stats = initialize_exp(
         args, "epoch", "loss"
     )
-    # build data
-    # train_dataset = MultiCropDataset(
-    #     args.data_path,
-    #     args.size_crops,
-    #     args.nmb_crops,
-    #     args.min_scale_crops,
-    #     args.max_scale_crops,
-    #     pil_blur=args.use_pil_blur,
-    # )
    
     # train_dataset=MultiModalityDataset(data_path,'/data/cifar10-multi.txt')
     train_dataset=MultiviewDataset(data_path,'/data/cifar10-multi.txt')    
@@ -218,13 +184,6 @@ def main():
     logger.info("Building data done with {} images loaded.".format(len(train_dataset)))
 
     # build model
-
-    # model = resnet_models.__dict__[args.arch](
-    #     normalize=True,
-    #     hidden_mlp=args.hidden_mlp,
-    #     output_dim=args.feat_dim,
-    #     nmb_prototypes=args.nmb_prototypes,
-    # )
     
     model = fc_models.__dict__['fc'](
         normalize=True,
@@ -273,10 +232,6 @@ def main():
         device_ids=[args.gpu_to_work_on],
         find_unused_parameters=True,
     )
-    
-
-    ##########################wdgrl
-    
   
     # optionally resume from a checkpoint
     to_restore = {"epoch": 0}
@@ -419,7 +374,6 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, queue):
         # measure data loading time
         
         data_time.update(time.time() - end)
-        # d_loss 初始化
         d_loss=0
 
         # update learning rate
@@ -446,56 +400,10 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, queue):
         #####output#####torch.Size([256, 3000])
         
         bs = inputs[0].size(0)
-        # print(bs)
-        
-        ###critic network /optim 
-        criticdevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        critic = nn.Sequential(
-            nn.Linear(int(bs)*128,320),
-            nn.ReLU(),
-            nn.Linear(320, 50),
-            nn.ReLU(),
-            nn.Linear(50, 20),
-            nn.ReLU(),
-            nn.Linear(20, 1)
-        ).to(criticdevice)
-        
-        # print(critic)
-        critic_optim = torch.optim.Adam(critic.parameters(), lr=1e-4)
-        
-        
-        # print(embedding.size())
-        
-        # [A, B, a1, b1, a2, b2, a3, b3]
-        
-        # ============ wdgrl loss ... ============
-        
-        # for i in range(0,8):
-        #     if i%2==0 and i ==0:
-        #         h_s=embedding[bs*i:bs*(i+1)]
-        #     elif i==1:
-        #         h_t=embedding[bs*i:bs*(i+1)]
-        #     elif i%2==0:
-        #         h_s=torch.cat((h_s,embedding[bs*i:bs*(i+1)]))
-        #     elif i%2==1:
-        #         h_t=torch.cat((h_t,embedding[bs*i:bs*(i+1)]))
         
         h_s=embedding[bs*0:bs*(1)]
         h_t=embedding[bs*1:bs*(2)] 
-             
-        for _ in range(args.k_critic):
-            gp = gradient_penalty(critic, h_s, h_t)
-            critic_s = critic(h_s.view(-1))
-            critic_t = critic(h_t.view(-1))
-            wasserstein_distance = critic_s.mean() - critic_t.mean()
-            critic_cost = -wasserstein_distance + args.gamma*gp
-            critic_optim.zero_grad()
-            critic_cost.backward(retain_graph=True)
-            critic_optim.step()
-    
-            d_loss += critic_cost
 
-        # ============ swav loss ... ============
         loss = 0
       
         
@@ -527,10 +435,6 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, queue):
 
             # cluster assignment prediction      
             subloss = 0
-            # for v in np.delete(np.arange(np.sum(args.nmb_crops)), crop_id):
-            #     p = softmax(output[bs * v: bs * (v + 1)] / args.temperature)
-            #     subloss -= torch.mean(torch.sum(q * torch.log(p), dim=1))
-            
             
             # [A, B, a1, b1, a2, b2, a3, b3]
             view1=np.array([0, 2, 4, 6])
@@ -549,12 +453,6 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, queue):
            
             loss += subloss / (np.sum(args.nmb_crops) - 1)
         loss /= len(args.crops_for_assign)
-        
-        critic_s = critic(h_s.view(-1))
-        critic_t = critic(h_t.view(-1))
-        wasserstein_distance = critic_s.mean() - critic_t.mean()
-        loss=loss+0.01*wasserstein_distance
-        # print(0.01*wasserstein_distance)
         
         # ============ backward and optim step ... ============
         optimizer.zero_grad()
@@ -659,11 +557,6 @@ class RegLog(nn.Module):
         self.linear.bias.data.zero_()
 
     def forward(self, x):
-        # average pool the final feature map
-       
-        ####测试fc con5 需注释
-        # x = self.av_pool(x)
-        ####
        
         # optional BN
         if self.bn is not None:
@@ -714,7 +607,7 @@ def test_train(model, reglog, optimizer, loader, epoch):
             return_counts=True,
             )[1], 0)
 
-         ####backbone 計算 大小
+         ####backbone
          
             output = model(torch.cat(inp).cuda(non_blocking=True))[0]
                 
@@ -783,7 +676,6 @@ def test_validate_network(val_loader, model, linear_classifier):
 
             # move to gpu  
             
-            #sly
             target = target.cuda(non_blocking=True)
             if not isinstance(inp, list):
                 inp = [inp]
@@ -793,16 +685,6 @@ def test_validate_network(val_loader, model, linear_classifier):
             return_counts=True,
             )[1], 0)
 
-
-            # start_idx = 0
-            
-            # for end_idx in idx_crops:
-            #     _out = model(torch.cat(inp[start_idx: end_idx]).cuda(non_blocking=True))
-            #     if start_idx == 0:
-            #         output = _out
-            #     else:
-            #         output = torch.cat((output, _out))
-            #     start_idx = end_idx
             output = model(torch.cat(inp).cuda(non_blocking=True))[0]
             # print(output)
             output = linear_classifier(output)

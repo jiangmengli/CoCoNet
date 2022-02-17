@@ -1,9 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 from pathlib import Path
 import argparse
 import json
@@ -215,35 +209,14 @@ class SimCLR(nn.Module):
         z1, z2 = z1.div(z1_m), z2.div(z2_m)
         out = torch.cat([z1, z2], dim=0)
 
-        # 非对角线相似性
         sim_matrix = torch.exp(torch.mm(out, out.t().contiguous()) / 0.5)
         mask = (torch.ones_like(sim_matrix) - torch.eye(2 * 128, device=sim_matrix.device)).bool()
         sim_matrix = sim_matrix.masked_select(mask).view(2 * 128, -1)
 
-        # 正样本对相似性
         pos_sim = torch.exp(torch.sum(z1 * z2, dim=-1) / 0.5)
         pos_sim = torch.cat([pos_sim, pos_sim], dim=0)
 
-        # 损失
         loss = (- torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
-
-
-
-        # z1 = self.projector(self.backbone(y1))
-        # z2 = self.projector(self.backbone(y2))
-        # z1 = self.bn(z1)
-        # z2 = self.bn(z2)
-        # z1_m = torch.sqrt(torch.sum(z1.clone().pow_(2),dim=1)).expand(128,128).T
-        # z2_m = torch.sqrt(torch.sum(z1.clone().pow_(2),dim=1)).expand(128,128).T
-        # z1 = z1.div(z1_m)
-        # z2 = z2.div(z2_m)
-
-        # sim_matrix = torch.exp(torch.mm(z1, z2.t().contiguous()) / 0.5)
-        # sim_matrix = (sim_matrix + sim_matrix.T) / 2
-
-        # pos_sim = torch.diag(sim_matrix)
-
-        # loss = (- torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
 
         return loss
 
