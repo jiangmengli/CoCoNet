@@ -39,9 +39,9 @@ def parse_option():
     parser.add_argument('--epochs', type=int, default=240, help='number of training epochs')
 
     # set hyper-params
-    parser.add_argument('--alpha', type=float, default=1e-8)
-    parser.add_argument('--beta', type=float, default=1e-4)
-    parser.add_argument('--gamma', type=float, default=1e-4)
+    parser.add_argument('--alpha', type=float, default=0.1)
+    parser.add_argument('--beta', type=float, default=0.1)
+    parser.add_argument('--gamma', type=float, default=0.2)
 
     # gsw
     parser.add_argument('--gswnn_type', default='max_gsw', type=str, help='gswnn_type', choices=['gsw', 'max_gsw'])
@@ -79,8 +79,8 @@ def parse_option():
     parser.add_argument('--num_classes', type=int, default=10, help='number of classes')
 
     # specify folder
-    parser.add_argument('--data_folder', type=str, default=None, help='path to data')
-    parser.add_argument('--model_path', type=str, default=None, help='path to save model')
+    parser.add_argument('--data_folder', type=str, default='../datasets/', help='path to data')
+    parser.add_argument('--model_path', type=str, default='./model_path/', help='path to save model')
 
     # add new views
     parser.add_argument('--view', type=str, default='Lab', choices=['Lab', 'YCbCr'])
@@ -236,6 +236,7 @@ def train(epoch, train_loader, model, contrast, criterion_ab_l, criterion_l_ori,
         # Calc gsw
         set_requires_grad(model, requires_grad=False)
         if opt.gswnn_type == 'max_gsw':
+            z = gsw.max_gsw(feat_l, feat_ab, feat_ori)
             loss += opt.gamma * gsw.max_gsw(feat_l, feat_ab, feat_ori)
         else:
             loss += opt.gamma * gsw.gsw(feat_l, feat_ab, feat_ori)
