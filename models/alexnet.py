@@ -59,7 +59,7 @@ class complementarity_factor_net(nn.Module):
     def forward(self, high_feat_l, feat_l, high_feat_ab, feat_ab, high_feat_ori, feat_ori):
         x = torch.cat([feat_l, feat_ori, feat_ab], 1)
         high_x = torch.cat([high_feat_l, high_feat_ori, high_feat_ab], 1)
-        high_x = high_x.unsqueeze(-1).unsqueeze(-1).expand(128, 384, 6, 6)
+        high_x = high_x.unsqueeze(-1).unsqueeze(-1).expand(-1, 384, 6, 6)
         x = torch.cat([x, high_x], 1)
         x = x.view(x.shape[0], -1)
         x = self.fc6(x)
