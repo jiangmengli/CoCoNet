@@ -79,8 +79,8 @@ def parse_option():
     parser.add_argument('--num_classes', type=int, default=10, help='number of classes')
 
     # specify folder
-    parser.add_argument('--data_folder', type=str, default='../datasets/', help='path to data')
-    parser.add_argument('--model_path', type=str, default='./model_path/', help='path to save model')
+    parser.add_argument('--data_folder', type=str, default=None, help='path to data')
+    parser.add_argument('--model_path', type=str, default=None, help='path to save model')
 
     # add new views
     parser.add_argument('--view', type=str, default='Lab', choices=['Lab', 'YCbCr'])
