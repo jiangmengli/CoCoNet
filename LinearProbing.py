@@ -23,7 +23,7 @@ from models.LinearModel import LinearClassifierAlexNet, LinearClassifierResNet
 
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
-    parser.add_argument('--model_name', type=str, default='cmvc_wd', help='model name')
+    parser.add_argument('--model_name', type=str, default='coconet', help='model name')
 
     parser.add_argument('--print_freq', type=int, default=10, help='print frequency')
     parser.add_argument('--tb_freq', type=int, default=500, help='tb frequency')
@@ -49,19 +49,19 @@ def parse_option():
                                                                          'resnet50v1', 'resnet101v1', 'resnet18v1',
                                                                          'resnet50v2', 'resnet101v2', 'resnet18v2',
                                                                          'resnet50v3', 'resnet101v3', 'resnet18v3'])
-    parser.add_argument('--model_path', type=str, default='./model_path/cmvc_wd/ckpt_epoch_240.pth', help='the model to test')
-    parser.add_argument('--layer', type=int, default=6, help='which layer to evaluate')
+    parser.add_argument('--model_path', type=str, default=None, help='the model to test')
+    parser.add_argument('--layer', type=int, default=5, help='which layer to evaluate')
 
     # dataset
-    parser.add_argument('--dataset', type=str, default='cifar-10', choices=['stl-10', 'tiny-imagenet','cifar-10','cifar-100'])
+    parser.add_argument('--dataset', type=str, default=None, choices=['stl-10', 'tiny-imagenet','cifar10','cifar100'])
 
     # add new views
     parser.add_argument('--view', type=str, default='Lab', choices=['Lab', 'YCbCr'])
 
     # path definition
-    parser.add_argument('--data_folder', type=str, default='../../datasets/', help='path to data')
-    parser.add_argument('--save_path', type=str, default='./save_path/', help='path to save linear classifier')
-    parser.add_argument('--tb_path', type=str, default='./path_to_tensorboard/', help='path to tensorboard')
+    parser.add_argument('--data_folder', type=str, default=None, help='path to data')
+    parser.add_argument('--save_path', type=str, default=None, help='path to save linear classifier')
+    parser.add_argument('--tb_path', type=str, default=None, help='path to tensorboard')
 
     # data crop threshold
     parser.add_argument('--crop_low', type=float, default=0.2, help='low area in crop')
@@ -113,16 +113,16 @@ def parse_option():
         opt_test.n_label = 10
     if opt_test.dataset == 'tiny-imagenet':
         opt_test.n_label = 200
-    if opt_test.dataset == 'cifar-10':
+    if opt_test.dataset == 'cifar10':
         opt_test.n_label = 10
-    if opt_test.dataset == 'cifar-100':
+    if opt_test.dataset == 'cifar100':
         opt_test.n_label = 100
     return opt_test
 
 
 def get_train_val_loader(args):
-    train_folder = os.path.join(args.data_folder, 'train')
-    val_folder = os.path.join(args.data_folder, 'val')
+    train_folder = os.path.join(args.data_folder, args.dataset, 'train')
+    val_folder = os.path.join(args.data_folder, args.dataset, 'val')
 
     if args.view == 'Lab':
         mean = [(0 + 100) / 2, (-86.183 + 98.233) / 2, (-107.857 + 94.478) / 2]
@@ -253,7 +253,7 @@ def train(epoch, train_loader, model, classifier, criterion, optimizer, opt):
 
         # ===================forward=====================
         with torch.no_grad():
-            feat_l, feat_ab, feat_ori = model(input, opt.layer)
+            feat_l, feat_ab, feat_ori, feat_comp = model(input, opt.layer)
             feat = torch.cat((feat_l.detach(), feat_ab.detach(), feat_ori.detach()), dim=1)
 
         output = classifier(feat)
