@@ -1,6 +1,6 @@
-# MetAug
+# CoCoNet
 
-### Install the PyTorch based environment for MetAug. 
+### Install the PyTorch based environment for CoCoNet. 
 ```bash
 # Create a conda environment
 conda create -n coconet python=3.7
