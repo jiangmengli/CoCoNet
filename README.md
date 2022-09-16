@@ -1,6 +1,6 @@
 # CoCoNet
 
-This paper ``Modeling Multiple Views via Implicitly Preserving Global Consistency and Local Complementarity'' is accepted by IEEE TKDE in 2022.
+This paper ''Modeling Multiple Views via Implicitly Preserving Global Consistency and Local Complementarity'' is accepted by IEEE TKDE in 2022.
 
 ### Install the PyTorch based environment for CoCoNet. 
 ```bash
