@@ -34,6 +34,10 @@ Readers can change hyperparameters directly in code or bash script
 
 If you find this repo useful for your research, please consider citing the paper
 ```
+@ARTICLE{9857632,  author={Li, Jiangmeng and Qiang, Wenwen and Zheng, Changwen and Su, Bing and Razzak, Farid and Wen, Ji-Rong and Xiong, Hui},  journal={IEEE Transactions on Knowledge and Data Engineering},   title={Modeling Multiple Views via Implicitly Preserving Global Consistency and Local Complementarity},   year={2022},  volume={},  number={},  pages={1-17},  doi={10.1109/TKDE.2022.3198746}}
+```
+or
+```
 @article{coconet2022jml,
   author    = {Jiangmeng Li and
                Wenwen Qiang and
