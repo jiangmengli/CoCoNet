@@ -1,5 +1,7 @@
 # CoCoNet
 
+This paper ``Modeling Multiple Views via Implicitly Preserving Global Consistency and Local Complementarity'' is accepted by IEEE TKDE in 2022.
+
 ### Install the PyTorch based environment for CoCoNet. 
 ```bash
 # Create a conda environment
@@ -27,3 +29,22 @@ python LinearProbing.py
 ```
 
 Readers can change hyperparameters directly in code or bash script
+
+## Citation
+
+If you find this repo useful for your research, please consider citing the paper
+```
+@article{coconet2022jml,
+  author    = {Jiangmeng Li and
+               Wenwen Qiang and
+               Changwen Zheng and
+               Bing Su and
+               Farid Razzak and
+               Ji-Rong Wen and
+               Hui Xiong},
+  title     = {Modeling Multiple Views via Implicitly Preserving Global Consistency and Local Complementarity},
+  journal   = {CoRR}
+  year      = {2022},
+  eprinttype = {arXiv}
+}
+```
